@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using LondonHotel.Api.Filters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace LondonHotel.Api
 {
@@ -25,7 +20,33 @@ namespace LondonHotel.Api
       // This method gets called by the runtime. Use this method to add services to the container.
       public void ConfigureServices(IServiceCollection services)
       {
-         services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+         services
+            .AddMvc(options =>
+            {
+               options.Filters.Add<JsonExceptionFilter>();
+               options.Filters.Add<RequireHttpsOrCloseAttribute>();
+            })
+            .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+         //for camel case 
+         services.AddRouting(options => options.LowercaseUrls = true);
+
+         //support for api versioning
+         services.AddApiVersioning(options =>
+         {
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.ApiVersionReader = new MediaTypeApiVersionReader();
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+            options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
+         });
+
+         //Need to add to Configure method below
+         services.AddCors(options =>
+         {
+            options.AddPolicy("AllowMyApp",
+               policy => policy.AllowAnyOrigin());
+         });
       }
 
       // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -40,7 +61,13 @@ namespace LondonHotel.Api
             app.UseHsts();
          }
 
-         app.UseHttpsRedirection();
+         //We have added RequireHttpsOrCloseAttribute to ensure that clients do not get https redirection and only
+         //come through via https
+         //app.UseHttpsRedirection();
+
+         //Cors is configured in ConfigureServices method
+         app.UseCors("AllowMyApp");
+
          app.UseMvc();
       }
    }
