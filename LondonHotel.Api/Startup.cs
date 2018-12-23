@@ -1,4 +1,5 @@
 ﻿using LondonHotel.Api.Filters;
+using LondonHotel.Api.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,8 @@ namespace LondonHotel.Api
       // This method gets called by the runtime. Use this method to add services to the container.
       public void ConfigureServices(IServiceCollection services)
       {
+         services.Configure<HotelInfo>(Configuration.GetSection("Info"));
+
          services
             .AddMvc(options =>
             {
