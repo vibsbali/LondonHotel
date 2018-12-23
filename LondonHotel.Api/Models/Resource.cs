@@ -7,9 +7,9 @@ using Newtonsoft.Json;
 
 namespace LondonHotel.Api.Models
 {
-    public abstract class Resource
-    {
-        [JsonProperty(Order = -2)]
-        public string Href { get; set; }
-    }
+    public abstract class Resource : Link
+   {
+      [JsonIgnore]
+      public Link Self { get; set; }
+   }
 }
